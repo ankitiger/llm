@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide to Leveraging LLMs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Neutrals -->
+    <!-- Application Structure Plan: A single-page application with a sticky top navigation bar for easy access to different thematic sections. The structure is designed for intuitive exploration rather than a linear slide-by-slide view. It starts with a hero section (Introduction), followed by an interactive tabbed "Playbook" for the tips & tricks, a clear two-column "Best Practices" section for the Dos and Don'ts, and a final "Implementation Plan" section. This task-oriented structure allows users to quickly jump to the content most relevant to them. The key interaction is the "copy prompt" feature, making the application a practical tool. Now includes a dedicated "LLM Power Tools" section with integrated Gemini API features for prompt refinement and PRD drafting. -->
+    <!-- Visualization & Content Choices: The source material is qualitative and text-based. Therefore, traditional charts are not suitable. The application relies on strong information architecture and UI design to present content. I've used: 1) Interactive Tabs (for 'Tips & Tricks') to organize related content without cluttering the page. Goal: Organize/Inform. Method: JS-powered tabs. 2) Two-Column Layout (for 'Dos & Don'ts') with icons and color-coding to make comparisons clear and digestible. Goal: Compare/Inform. Method: HTML/Tailwind Grid. 3) Interactive Prompt Cards with a "copy" button to make the example prompts practical and actionable. Goal: Inform/Engage. Method: JS clipboard interaction. 4) ✨ LLM-powered "Prompt Refiner" using Gemini API for interactive prompt improvement. Goal: Engage/Teach. Method: JS fetch API call to Gemini. 5) ✨ LLM-powered "PRD Section Drafter" using Gemini API for dynamic content generation. Goal: Engage/Apply. Method: JS fetch API call to Gemini. This design avoids static presentation and encourages user interaction. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1f2937;
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+        }
+        .tab-btn.active {
+            background-color: #4f46e5;
+            color: #ffffff;
+        }
+        .prompt-card {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: #e5e7eb;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #6b7280;
+        }
+        .llm-output-area {
+            background-color: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            min-height: 100px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4f46e5;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-gray-800">LLM Consulting Guide</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#intro" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">Introduction</a>
+                        <a href="#playbook" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">Playbook</a>
+                        <a href="#practices" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">Best Practices</a>
+                        <a href="#plan" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">Implementation</a>
+                        <a href="#llm-tools" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700">LLM Tools</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="intro" class="py-20 md:py-28 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Leveraging LLMs for Enhanced Consulting</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-600">
+                    This guide provides an interactive overview of how Large Language Models (LLMs) can transform consulting work. Explore practical tips, best practices, and implementation strategies to augment your capabilities, drive efficiency, and deliver deeper insights.
+                </p>
+                <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-indigo-600 text-3xl font-bold">▲</p>
+                        <p class="mt-2 text-sm font-semibold text-gray-700">Increased Efficiency</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-indigo-600 text-3xl font-bold">⌬</p>
+                        <p class="mt-2 text-sm font-semibold text-gray-700">Deeper Insights</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-indigo-600 text-3xl font-bold">⮐</p>
+                        <p class="mt-2 text-sm font-semibold text-gray-700">Faster Delivery</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-indigo-600 text-3xl font-bold">✧</p>
+                        <p class="mt-2 text-sm font-semibold text-gray-700">Enhanced Creativity</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="playbook" class="py-20 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">The Consultant's LLM Playbook</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                        Discover practical tips and tricks for applying LLMs to core consulting tasks. Select a category below to see explanations and actionable prompt examples you can use today.
+                    </p>
+                </div>
+
+                <div class="mt-12 max-w-4xl mx-auto">
+                    <div class="mb-4 flex flex-wrap justify-center gap-2" id="tab-buttons">
+                        <button class="tab-btn active px-4 py-2 text-sm font-semibold bg-gray-200 text-gray-800 rounded-full transition" data-tab="1">Business Context</button>
+                        <button class="tab-btn px-4 py-2 text-sm font-semibold bg-gray-200 text-gray-800 rounded-full transition" data-tab="2">User Stories</button>
+                        <button class="tab-btn px-4 py-2 text-sm font-semibold bg-gray-200 text-gray-800 rounded-full transition" data-tab="3">PRD Generation</button>
+                        <button class="tab-btn px-4 py-2 text-sm font-semibold bg-gray-200 text-gray-800 rounded-full transition" data-tab="4">MVP Development</button>
+                    </div>
+                    <div id="tab-content" class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                        <div class="tab-pane active" id="tab-pane-1">
+                            <h3 class="text-xl font-bold text-gray-900">Leveraging LLM to Understand the Business Context</h3>
+                            <p class="mt-2 text-gray-600">LLMs can quickly ingest and analyze vast amounts of unstructured data like reports, research, and transcripts. This allows consultants to rapidly grasp a client's business, challenges, and competitive landscape, significantly reducing the initial discovery phase.</p>
+                            <div class="mt-4 space-y-4">
+                                <pre class="prompt-card"><code class="prompt-text">Analyze the provided client briefs, annual reports, and industry trend documents for [Client Name] and summarize their core business model, primary challenges, key competitors, and recent market positioning. Identify any stated or implied strategic goals.</code><button class="copy-btn">Copy</button></pre>
+                                <pre class="prompt-card"><code class="prompt-text">Given these 10 confidential internal project documents, extract all mentions of 'cost efficiency initiatives' and 'customer retention strategies,' and present them as a bulleted list with source document references.</code><button class="copy-btn">Copy</button></pre>
+                            </div>
+                        </div>
+                        <div class="tab-pane hidden" id="tab-pane-2">
+                            <h3 class="text-xl font-bold text-gray-900">LLM for Generating Effective User Stories</h3>
+                            <p class="mt-2 text-gray-600">Based on high-level requirements or stakeholder interviews, LLMs can help craft well-structured and comprehensive user stories. They can also propose various scenarios and edge cases, ensuring a more robust requirements backlog.</p>
+                             <div class="mt-4 space-y-4">
+                                <pre class="prompt-card"><code class="prompt-text">Generate 8-10 user stories for a new online food delivery platform's ordering process. Consider different user roles (customer, restaurant, delivery driver) and include acceptance criteria for each story. Follow the format: 'As a [user role], I want to [action] so that [benefit].'</code><button class="copy-btn">Copy</button></pre>
+                                <pre class="prompt-card"><code class="prompt-text">From the following meeting notes about a new feature for a CRM system [paste notes], extract potential user needs and rephrase them into concise user stories, focusing on the 'As a Sales Rep' persona.</code><button class="copy-btn">Copy</button></pre>
+                            </div>
+                        </div>
+                        <div class="tab-pane hidden" id="tab-pane-3">
+                            <h3 class="text-xl font-bold text-gray-900">LLM Can Be Used to Generate PRD</h3>
+                            <p class="mt-2 text-gray-600">LLMs can significantly accelerate the drafting of a Product Requirements Document. This includes defining objectives, detailing requirements, outlining personas, and suggesting user flows, all while maintaining consistency.</p>
+                             <div class="mt-4 space-y-4">
+                                <pre class="prompt-card"><code class="prompt-text">Create a detailed Product Requirements Document (PRD) outline for a new mobile application designed for personal finance management. Ensure it includes sections for Executive Summary, Problem Statement, Product Vision, Goals, User Personas, Functional Requirements, Non-Functional Requirements (Security, Performance, Usability), Release Plan, and Success Metrics. Briefly describe the purpose of each section.</code><button class="copy-btn">Copy</button></pre>
+                                <pre class="prompt-card"><code class="prompt-text">Given the attached user stories and high-level feature descriptions, draft the 'Functional Requirements' and 'Non-Functional Requirements' sections for a PRD. For functional requirements, use a table format with columns: 'Requirement ID', 'Description', 'Priority', 'Dependencies'.</code><button class="copy-btn">Copy</button></pre>
+                            </div>
+                        </div>
+                        <div class="tab-pane hidden" id="tab-pane-4">
+                            <h3 class="text-xl font-bold text-gray-900">LLM Can Fast-Forward MVP Development</h3>
+                            <p class="mt-2 text-gray-600">Modern AI coding tools integrate LLMs to assist developers directly. They can generate boilerplate code, suggest refactorings, and even build basic UI layouts from text, significantly speeding up MVP creation.</p>
+                             <div class="mt-4 space-y-4">
+                                <pre class="prompt-card"><code class="prompt-text">Generate a responsive React component for a multi-step user registration form, including fields for name, email, password, and a 'next' button. Use Tailwind CSS for styling and add basic client-side validation.</code><button class="copy-btn">Copy</button></pre>
+                                <pre class="prompt-card"><code class="prompt-text">Create the HTML structure and basic CSS (Tailwind) for a product listing page showing a grid of 4 product cards. Each card should have an image placeholder, title, price, and 'Add to Cart' button.</code><button class="copy-btn">Copy</button></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="practices" class="py-20 md:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Best Practices: Dos & Don'ts</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                        Using LLMs effectively and responsibly requires clear guidelines. Here are the essential rules to follow to maximize benefits while minimizing risks.
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                    <div class="bg-green-50/50 border border-green-200 p-6 rounded-lg">
+                        <h3 class="text-2xl font-bold text-green-800 flex items-center">
+                            <span class="text-3xl mr-3">✔</span> DOs
+                        </h3>
+                        <ul class="mt-4 space-y-4 text-green-900">
+                            <li class="flex">
+                                <strong class="flex-shrink-0 font-semibold w-28">Use Authorized Tools:</strong>
+                                <span>Prioritize data governance, security, and compliance by using organizationally-approved LLM platforms.</span>
+                            </li>
+                            <li class="flex">
+                                <strong class="flex-shrink-0 font-semibold w-28">Always Verify:</strong>
+                                <span>Cross-reference facts and validate code. Treat LLM output as a first draft, not a final answer.</span>
+                            </li>
+                            <li class="flex">
+                                <strong class="flex-shrink-0 font-semibold w-28">Be Specific:</strong>
+                                <span>Provide detailed instructions, context, and examples in your prompts to get high-quality, relevant results.</span>
+                            </li>
+                            <li class="flex">
+                                <strong class="flex-shrink-0 font-semibold w-28">Iterate:</strong>
+                                <span>Break down complex tasks. Start with small prompts and refine them iteratively to guide the LLM to the desired outcome.</span>
+                            </li>
+                        </ul>
+                    </div>
+                     <div class="bg-amber-50/50 border border-amber-200 p-6 rounded-lg">
+                        <h3 class="text-2xl font-bold text-amber-800 flex items-center">
+                            <span class="text-3xl mr-3">✖</span> DON'Ts
+                        </h3>
+                        <ul class="mt-4 space-y-4 text-amber-900">
+                            <li class="flex">
+                                <strong class="flex-shrink-0 font-semibold w-32">Input Sensitive Data:</strong>
+                                <span>Never input confidential or proprietary information into public LLMs without explicit approval.</span>
+                            </li>
+                            <li class="flex">
+                                <strong class="flex-shrink-0 font-semibold w-32">Blindly Trust:</strong>
+                                <span>Never assume the LLM is infallible. Human oversight is crucial to catch errors and hallucinations.</span>
+                            </li>
+                            <li class="flex">
+                                <strong class="flex-shrink-0 font-semibold w-32">Use Vague Prompts:</strong>
+                                <span>Avoid generic prompts. A lack of specificity will lead to generic, incomplete, or irrelevant responses.</span>
+                            </li>
+                            <li class="flex">
+                                <strong class="flex-shrink-0 font-semibold w-32">Automate Critical Judgment:</strong>
+                                <span>Do not replace human expertise in areas requiring nuanced judgment, ethics, or moral reasoning.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="plan" class="py-20 md:py-24">
+             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Implementation Plan & Activities</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                        Put theory into practice. Here’s how you can integrate LLMs into your workflow, from defining document structures to generating frontend code.
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="text-xl font-bold text-gray-900">Define Document Layouts First</h3>
+                        <p class="mt-2 text-gray-600">Before generating content, leverage LLMs to define the optimal structure for key project documents like BRDs or PRDs. This ensures your final documents are comprehensive and aligned with best practices.</p>
+                        <div class="mt-4 space-y-4">
+                           <pre class="prompt-card"><code class="prompt-text">As a business analyst, I need to create a comprehensive Business Requirements Document (BRD) for a new enterprise software solution. Please provide a detailed table of contents and a brief description for each section, including typical content and any cross-references that should be made.</code><button class="copy-btn">Copy</button></pre>
+                        </div>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="text-xl font-bold text-gray-900">Generate Frontend Designs from PRDs</h3>
+                        <p class="mt-2 text-gray-600">Once your requirements are finalized, LLMs can translate them into tangible frontend code. This bridges the gap between documentation and implementation by generating components, suggesting UI patterns, and creating basic wireframes.</p>
+                        <div class="mt-4 space-y-4">
+                           <pre class="prompt-card"><code class="prompt-text">Based on the following PRD requirement for a 'User Dashboard' section: 'The dashboard must display the user's name, profile picture, and three key performance metrics in separate cards. It should be responsive and use a clean, modern design with rounded corners.' Generate the HTML structure and accompanying Tailwind CSS for this dashboard, including placeholders for data.</code><button class="copy-btn">Copy</button></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="llm-tools" class="py-20 md:py-24 bg-gray-50">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">✨ LLM Power Tools ✨</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                        Experience the power of LLMs firsthand! Use these interactive tools powered by the Gemini API to refine your prompts and draft essential document sections.
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                    <!-- Prompt Refiner -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                            ✨ Prompt Refiner
+                        </h3>
+                        <p class="mt-2 text-gray-600">Input a rough idea or a simple prompt, and the LLM will refine it for clarity, specificity, and effectiveness, applying best practices for prompt engineering.</p>
+                        <div class="mt-4">
+                            <label for="roughPrompt" class="block text-sm font-medium text-gray-700">Your Rough Prompt/Task:</label>
+                            <textarea id="roughPrompt" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"></textarea>
+                            <button id="refinePromptBtn" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                                <span id="refinePromptBtnText">Refine Prompt</span>
+                                <span id="refinePromptSpinner" class="loading-spinner hidden ml-2"></span>
+                            </button>
+                        </div>
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700">Refined Prompt Output:</label>
+                            <div id="refinedPromptOutput" class="llm-output-area mt-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- PRD Section Drafter -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                            ✨ PRD Section Drafter
+                        </h3>
+                        <p class="mt-2 text-gray-600">Select a PRD section and provide key context, and the LLM will draft initial content for that section, helping to kickstart your documentation.</p>
+                        <div class="mt-4">
+                            <label for="prdSectionSelect" class="block text-sm font-medium text-gray-700">Select PRD Section:</label>
+                            <select id="prdSectionSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3">
+                                <option value="">-- Select --</option>
+                                <option value="Executive Summary">Executive Summary</option>
+                                <option value="Problem Statement">Problem Statement</option>
+                                <option value="Functional Requirements">Functional Requirements</option>
+                                <option value="Non-Functional Requirements">Non-Functional Requirements</option>
+                                <option value="User Personas">User Personas</option>
+                            </select>
+
+                            <label for="prdSectionContext" class="block text-sm font-medium text-gray-700 mt-4">Context/Key Points for this Section:</label>
+                            <textarea id="prdSectionContext" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"></textarea>
+                            
+                            <button id="draftPRDSectionBtn" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                                <span id="draftPRDSectionBtnText">Draft Section</span>
+                                <span id="draftPRDSectionSpinner" class="loading-spinner hidden ml-2"></span>
+                            </button>
+                        </div>
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700">Drafted Section Output:</label>
+                            <div id="draftedPRDSectionOutput" class="llm-output-area mt-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-400 text-sm">
+            <p>&copy; 2025 Interactive LLM Guide. All Rights Reserved.</p>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.getAttribute('data-tab');
+
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    tabPanes.forEach(pane => {
+                        if (pane.id === `tab-pane-${tabId}`) {
+                            pane.classList.remove('hidden');
+                            pane.classList.add('active');
+                        } else {
+                            pane.classList.add('hidden');
+                            pane.classList.remove('active');
+                        }
+                    });
+                });
+            });
+
+            const copyButtons = document.querySelectorAll('.copy-btn');
+            copyButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const promptTextElement = button.previousElementSibling;
+                    const textToCopy = promptTextElement.innerText;
+                    
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        button.textContent = 'Copied!';
+                        setTimeout(() => {
+                            button.textContent = 'Copy';
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Failed to copy text: ', err);
+                    }
+                    document.body.removeChild(textArea);
+                });
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.4
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+            // LLM Integration Functions
+            const refinePromptBtn = document.getElementById('refinePromptBtn');
+            const roughPromptInput = document.getElementById('roughPrompt');
+            const refinedPromptOutput = document.getElementById('refinedPromptOutput');
+            const refinePromptBtnText = document.getElementById('refinePromptBtnText');
+            const refinePromptSpinner = document.getElementById('refinePromptSpinner');
+
+            refinePromptBtn.addEventListener('click', async () => {
+                const prompt = roughPromptInput.value.trim();
+                if (!prompt) {
+                    refinedPromptOutput.textContent = 'Please enter a prompt to refine.';
+                    return;
+                }
+
+                refinePromptBtn.disabled = true;
+                refinePromptBtnText.textContent = 'Refining...';
+                refinePromptSpinner.classList.remove('hidden');
+                refinedPromptOutput.textContent = ''; // Clear previous output
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: `Act as an expert prompt engineer. Refine the following prompt for an LLM to be more clear, specific, and effective, incorporating best practices for iterative prompting and detail. Original prompt: ${prompt}` }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; 
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        refinedPromptOutput.textContent = result.candidates[0].content.parts[0].text;
+                    } else {
+                        refinedPromptOutput.textContent = 'Error: No valid response from LLM.';
+                        console.error('LLM response structure unexpected:', result);
+                    }
+                } catch (error) {
+                    refinedPromptOutput.textContent = 'Error refining prompt. Please try again.';
+                    console.error('Fetch error:', error);
+                } finally {
+                    refinePromptBtn.disabled = false;
+                    refinePromptBtnText.textContent = 'Refine Prompt';
+                    refinePromptSpinner.classList.add('hidden');
+                }
+            });
+
+            const draftPRDSectionBtn = document.getElementById('draftPRDSectionBtn');
+            const prdSectionSelect = document.getElementById('prdSectionSelect');
+            const prdSectionContext = document.getElementById('prdSectionContext');
+            const draftedPRDSectionOutput = document.getElementById('draftedPRDSectionOutput');
+            const draftPRDSectionBtnText = document.getElementById('draftPRDSectionBtnText');
+            const draftPRDSectionSpinner = document.getElementById('draftPRDSectionSpinner');
+
+            draftPRDSectionBtn.addEventListener('click', async () => {
+                const section = prdSectionSelect.value;
+                const context = prdSectionContext.value.trim();
+
+                if (!section) {
+                    draftedPRDSectionOutput.textContent = 'Please select a PRD section.';
+                    return;
+                }
+
+                draftPRDSectionBtn.disabled = true;
+                draftPRDSectionBtnText.textContent = 'Drafting...';
+                draftPRDSectionSpinner.classList.remove('hidden');
+                draftedPRDSectionOutput.textContent = ''; // Clear previous output
+
+                let promptText = `Act as a skilled Product Manager. Draft the '${section}' section of a Product Requirements Document based on the following context. Ensure the content is professional, concise, and aligns with standard PRD structure.`;
+
+                if (section === "Functional Requirements") {
+                    promptText += ` Focus on specific, measurable requirements.`;
+                } else if (section === "Non-Functional Requirements") {
+                    promptText += ` Include aspects like performance, security, usability, and scalability.`;
+                } else if (section === "User Personas") {
+                    promptText += ` Describe key user types including their goals, pain points, and typical interactions.`;
+                } else if (section === "Executive Summary") {
+                    promptText += ` Provide a high-level overview of the project, its goals, and key deliverables.`;
+                } else if (section === "Problem Statement") {
+                    promptText += ` Clearly articulate the problem the product aims to solve, its impact, and who it affects.`;
+                }
+
+                promptText += `\n\nContext: ${context}`;
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: promptText }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; 
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        draftedPRDSectionOutput.textContent = result.candidates[0].content.parts[0].text;
+                    } else {
+                        draftedPRDSectionOutput.textContent = 'Error: No valid response from LLM.';
+                        console.error('LLM response structure unexpected:', result);
+                    }
+                } catch (error) {
+                    draftedPRDSectionOutput.textContent = 'Error drafting section. Please try again.';
+                    console.error('Fetch error:', error);
+                } finally {
+                    draftPRDSectionBtn.disabled = false;
+                    draftPRDSectionBtnText.textContent = 'Draft Section';
+                    draftPRDSectionSpinner.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
